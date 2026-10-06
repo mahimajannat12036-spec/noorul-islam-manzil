@@ -1,0 +1,49 @@
+name: Build Android APK
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [ main ]
+
+permissions:
+  contents: read
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Extract app project
+        run: |
+          mkdir app
+          unzip -q noorul_islam_manzil_GITHUB_ACTIONS.zip -d app
+          echo "Project files:"
+          find app -maxdepth 3 -type f | sort
+
+      - name: Set up Flutter
+        uses: subosito/flutter-action@v2
+        with:
+          channel: stable
+          cache: true
+
+      - name: Create Android platform files
+        working-directory: app
+        run: flutter create --platforms=android --project-name noorul_islam_manzil .
+
+      - name: Get packages
+        working-directory: app
+        run: flutter pub get
+
+      - name: Build release APK
+        working-directory: app
+        run: flutter build apk --release
+
+      - name: Upload APK
+        uses: actions/upload-artifact@v4
+        with:
+          name: noorul-islam-manzil-apk
+          path: app/build/app/outputs/flutter-apk/app-release.apk
+          if-no-files-found: error
